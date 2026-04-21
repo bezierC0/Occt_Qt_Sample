@@ -167,6 +167,6 @@ void MainWindow::onExport() {
     appendLog("===================================");
   } else {
     statusBar()->showMessage("Export Failed");
-    appendLog("Status: ✗ Export failed");
+    appendLog("Status: Export failed");
   }
 }
