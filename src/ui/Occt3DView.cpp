@@ -96,7 +96,10 @@ void Occt3DView::init() {
     m_viewer->SetDefaultBackgroundColor(Quantity_NOC_BLACK);
     m_viewer->SetDefaultLights();
     m_viewer->SetLightOn();
+
+    // Grid
     m_viewer->ActivateGrid(Aspect_GT_Rectangular, Aspect_GDM_Lines);
+    m_viewer->SetRectangularGridValues(0.0,0.0,10.0,10.0,0.0);
 
     // 2. Create a 3D View
     m_view = m_viewer->CreateView();

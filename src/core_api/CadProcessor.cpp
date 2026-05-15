@@ -109,7 +109,8 @@ bool CadProcessor::ReadSTEP(const std::string &filePath) {
   reader.SetLayerMode(true);
   reader.SetPropsMode(true);
 
-  Interface_Static::SetCVal("xstep.cascade.unit", "M");
+  // unit
+  //Interface_Static::SetCVal("xstep.cascade.unit", "M");
 
   IFSelect_ReturnStatus status = reader.ReadFile(filePath.c_str());
   if (status != IFSelect_RetDone)
