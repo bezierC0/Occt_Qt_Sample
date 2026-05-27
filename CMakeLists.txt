@@ -1,6 +1,42 @@
 cmake_minimum_required(VERSION 3.19)
 project(Occt_Qt_Sample VERSION 0.0.1 LANGUAGES CXX)
 
+####################################
+# cppcheck
+####################################
+find_program(CPPCHECK cppcheck)
+
+if(CPPCHECK)
+    message(STATUS "cppcheck found: ${CPPCHECK}")
+    add_custom_target(cppcheck
+        COMMAND ${CMAKE_COMMAND} -E echo "========== CPPCHECK START =========="
+        COMMAND ${CPPCHECK}
+            --enable=warning,performance,portability
+            --std=c++17
+
+            --inline-suppr
+            --suppress=missingIncludeSystem
+
+            # Qt macros
+            -DQ_OBJECT=
+            -Dslots=
+            -Dsignals=public
+            -Demit=
+
+            # OpenCASCADE
+            "-DHandle(x)=void*"
+
+            # ignore dirs
+            -i ${CMAKE_SOURCE_DIR}/external
+            -i ${CMAKE_BINARY_DIR}
+
+            ${CMAKE_SOURCE_DIR}/src
+        COMMAND ${CMAKE_COMMAND} -E echo "========== CPPCHECK END =========="
+    )
+else()
+    message(WARNING "cppcheck not found")
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
