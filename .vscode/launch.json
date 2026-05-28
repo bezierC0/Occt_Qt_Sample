@@ -18,7 +18,8 @@
             //"externalConsole": false, 
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/.vscode/main.natvis",
-            "preLaunchTask": "CMake: build"
+            //"preLaunchTask": "CMake: build"
+            "preLaunchTask": "tidy + build"
         }
     ]
 }
