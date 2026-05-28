@@ -16,10 +16,18 @@
 #include <OpenGl_GraphicDriver.hxx>
 #ifdef _WIN32
 #include <WNT_Window.hxx>
+#elif defined(__APPLE__)
+#ifdef __OBJC__
+@class NSView;
+#else
+class NSView;
+#endif
+#include <Cocoa_Window.hxx>
 #else
 #include <X11/Xlib.h>
 #include <Xw_Window.hxx>
 #endif
+
 
 
 // Map Qt buttons bitmask to virtual keys.
@@ -273,11 +281,14 @@ void Occt3DView::initializeGL()
     }
 
 #ifdef _WIN32
-    // Windows: WNT_Window を使用
+    // Windows: WNT_Window 
     Aspect_Handle aWindowHandle = (Aspect_Handle)winId();
     Handle(WNT_Window) aWindow = new WNT_Window(aWindowHandle);
+#elif defined(__APPLE__)
+    // macOS: Cocoa_Window 
+    Handle(Cocoa_Window) aWindow = new Cocoa_Window((NSView*)winId());
 #else
-    // Linux (X11): Xw_Window を使用
+    // Linux (X11): Xw_Window 
     Handle(Aspect_DisplayConnection) aDisp = m_viewer->Driver()->GetDisplayConnection();
     Handle(Xw_Window) aWindow = new Xw_Window(aDisp, (Window)winId());
 #endif
