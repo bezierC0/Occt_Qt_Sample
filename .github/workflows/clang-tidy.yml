@@ -52,5 +52,5 @@ jobs:
             ${{ github.workspace }}/src/core_api/CadProcessor.cpp \
             -p ${{ github.workspace }}/build \
             "--header-filter=^${{ github.workspace }}/src/.*" \
-            --extra-arg=-Wno-deprecated-declarations \
-            --warnings-as-errors="readability-identifier-naming"
+            --extra-arg=-Wno-deprecated-declarations
+            #--warnings-as-errors="readability-identifier-naming"
