@@ -1,6 +1,42 @@
 cmake_minimum_required(VERSION 3.19)
 project(Occt_Qt_Sample VERSION 0.0.1 LANGUAGES CXX)
 
+####################################
+# cppcheck
+####################################
+find_program(CPPCHECK cppcheck)
+
+if(CPPCHECK)
+    message(STATUS "cppcheck found: ${CPPCHECK}")
+    add_custom_target(cppcheck
+        COMMAND ${CMAKE_COMMAND} -E echo "========== CPPCHECK START =========="
+        COMMAND ${CPPCHECK}
+            --enable=warning,performance,portability
+            --std=c++17
+
+            --inline-suppr
+            --suppress=missingIncludeSystem
+
+            # Qt macros
+            -DQ_OBJECT=
+            -Dslots=
+            -Dsignals=public
+            -Demit=
+
+            # OpenCASCADE
+            "-DHandle(x)=void*"
+
+            # ignore dirs
+            -i ${CMAKE_SOURCE_DIR}/external
+            -i ${CMAKE_BINARY_DIR}
+
+            ${CMAKE_SOURCE_DIR}/src
+        COMMAND ${CMAKE_COMMAND} -E echo "========== CPPCHECK END =========="
+    )
+else()
+    message(WARNING "cppcheck not found")
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
@@ -39,7 +75,11 @@ endif()
 set(OpenCASCADE_DIR "" CACHE PATH "OpenCASCADE Options: Path to OpenCASCADE directory")
 set(OpenCASCADE_3RDPARTY_DIR "" CACHE PATH "OpenCASCADE Options: Path to OpenCASCADE 3RDPARTY directory")
 
-include(${OpenCASCADE_DIR}/CMake/OpenCASCADEConfig.cmake)
+if(WIN32)
+    include(${OpenCASCADE_DIR}/CMake/OpenCASCADEConfig.cmake)
+else()
+    find_package(OpenCASCADE REQUIRED)
+endif()
 
 set(OpenCASCADE_VERSION ${OpenCASCADE_MAJOR_VERSION}.${OpenCASCADE_MINOR_VERSION}.${OpenCASCADE_MAINTENANCE_VERSION})
 
@@ -47,6 +87,7 @@ message(STATUS "OpenCascade version ${OpenCASCADE_VERSION}")
 message(STATUS "OpenCascade binary ${OpenCASCADE_BINARY_DIR}")
 message(STATUS "OpenCascade library ${OpenCASCADE_LIBRARY_DIR}")
 message(STATUS "OpenCascade include ${OpenCASCADE_INCLUDE_DIR}")
+message(STATUS "OpenCascade 3rdparty ${OpenCASCADE_3RDPARTY_DIR}")
 
 # Define the list of OpenCASCADE toolkits to link against based on your project's needs
 set(
@@ -80,52 +121,65 @@ else()
 endif()
 
 # Build the final list of library files to link. 
-# Note: On Windows with MSVC, linking against the .lib files (implib) is sufficient.
 set(OCCT_LIBRARIES_TO_LINK "")
-foreach(OccTK ${OpenCASCADE_TOOLKITS})
-    list(APPEND OCCT_LIBRARIES_TO_LINK "${OccTK}.lib")
-endforeach()
-
-list(APPEND OCCT_LIBRARIES_TO_LINK "OpenGL32.lib")
-
-# Find core OpenCASCADE runtime DLLs from the binary directory
-file(GLOB OpenCASCADE_TOOLKITS_DLLS "${OpenCASCADE_BINARY_DIR}/*.dll")
-
-# 3RDPARTY
-file(GLOB FREETYPE_DIRS         "${OpenCASCADE_3RDPARTY_DIR}/freetype*")
-file(GLOB TCLTK_DIRS            "${OpenCASCADE_3RDPARTY_DIR}/tcltk*")
-file(GLOB FREEIMAGE_DIRS        "${OpenCASCADE_3RDPARTY_DIR}/freeimage*")
-file(GLOB TBB_DIRS              "${OpenCASCADE_3RDPARTY_DIR}/tbb*")
-file(GLOB JEMALLOC_DIRS         "${OpenCASCADE_3RDPARTY_DIR}/jemalloc*")
-file(GLOB FFMPEG_DIRS           "${OpenCASCADE_3RDPARTY_DIR}/ffmpeg*")
-
-set(3RDPARTY_MODULE_DIRS
-    ${FREETYPE_DIRS}
-    ${TCLTK_DIRS}
-    ${FREEIMAGE_DIRS}
-    ${TBB_DIRS}
-    ${JEMALLOC_DIRS}
-    ${FFMPEG_DIRS}
-)
-set(OpenCASCADE_3RDPARTY_DLLS "")
-foreach(3RDPARTY_MODULE_DIR ${3RDPARTY_MODULE_DIRS})
-    set(3RDPARTY_MODULE_BIN_DIR "${3RDPARTY_MODULE_DIR}/bin")
-    if(EXISTS "${3RDPARTY_MODULE_BIN_DIR}")
-        # Find all DLLs in the bin directory
-        file(GLOB DLLS_IN_BIN "${3RDPARTY_MODULE_BIN_DIR}/*.dll")
-        # Add found DLLs to the list
-        list(APPEND OpenCASCADE_3RDPARTY_DLLS ${DLLS_IN_BIN})
+if(WIN32)
+    foreach(OccTK ${OpenCASCADE_TOOLKITS})
+        list(APPEND OCCT_LIBRARIES_TO_LINK "${OccTK}.lib")
+    endforeach()
+    list(APPEND OCCT_LIBRARIES_TO_LINK "OpenGL32.lib")
+else()
+    set(OCCT_LIBRARIES_TO_LINK ${OpenCASCADE_TOOLKITS})
+    if(APPLE)
+        find_package(OpenGL REQUIRED)
+        list(APPEND OCCT_LIBRARIES_TO_LINK ${OPENGL_LIBRARIES})
+    else()
+        list(APPEND OCCT_LIBRARIES_TO_LINK "GL")
     endif()
-endforeach()
+endif()
 
-file(GLOB 3RDPARTY_MODULE_OPENVR_DIR "${OpenCASCADE_3RDPARTY_DIR}/openvr*")
-file(GLOB OPENVR_DLLS_IN_BIN "${3RDPARTY_MODULE_OPENVR_DIR}/bin/win64/*.dll")
-list(APPEND OpenCASCADE_3RDPARTY_DLLS ${OPENVR_DLLS_IN_BIN})
+if(WIN32)
+    # Find core OpenCASCADE runtime DLLs from the binary directory
+    file(GLOB OpenCASCADE_TOOLKITS_DLLS "${OpenCASCADE_BINARY_DIR}/*.dll")
 
-message(STATUS "Found DLLs:")
-foreach(dll ${OpenCASCADE_3RDPARTY_DLLS})
-    message(STATUS "  ${dll}")
-endforeach()
+    # 3RDPARTY
+    file(GLOB FREETYPE_DIRS         "${OpenCASCADE_3RDPARTY_DIR}/freetype*")
+    file(GLOB TCLTK_DIRS            "${OpenCASCADE_3RDPARTY_DIR}/tcltk*")
+    file(GLOB FREEIMAGE_DIRS        "${OpenCASCADE_3RDPARTY_DIR}/freeimage*")
+    file(GLOB TBB_DIRS              "${OpenCASCADE_3RDPARTY_DIR}/tbb*")
+    file(GLOB JEMALLOC_DIRS         "${OpenCASCADE_3RDPARTY_DIR}/jemalloc*")
+    file(GLOB FFMPEG_DIRS           "${OpenCASCADE_3RDPARTY_DIR}/ffmpeg*")
+
+    set(3RDPARTY_MODULE_DIRS
+        ${FREETYPE_DIRS}
+        ${TCLTK_DIRS}
+        ${FREEIMAGE_DIRS}
+        ${TBB_DIRS}
+        ${JEMALLOC_DIRS}
+        ${FFMPEG_DIRS}
+    )
+    # OpenCASCADE_3RDPARTY_DLLS is already initialized before this block, but good to ensure it's clear.
+    # set(OpenCASCADE_3RDPARTY_DLLS "")
+    foreach(3RDPARTY_MODULE_DIR ${3RDPARTY_MODULE_DIRS})
+        set(CURRENT_3RDPARTY_MODULE_BIN_DIR "${3RDPARTY_MODULE_DIR}/bin")
+        if(EXISTS "${CURRENT_3RDPARTY_MODULE_BIN_DIR}")
+            # Find all DLLs in the bin directory
+            file(GLOB DLLS_IN_BIN "${CURRENT_3RDPARTY_MODULE_BIN_DIR}/*.dll")
+            # Add found DLLs to the list
+            list(APPEND OpenCASCADE_3RDPARTY_DLLS ${DLLS_IN_BIN})
+        else()
+            message(STATUS "3rdparty module bin directory not found: ${CURRENT_3RDPARTY_MODULE_BIN_DIR}")
+        endif()
+    endforeach()
+
+    file(GLOB 3RDPARTY_MODULE_OPENVR_DIR "${OpenCASCADE_3RDPARTY_DIR}/openvr*")
+    file(GLOB OPENVR_DLLS_IN_BIN "${3RDPARTY_MODULE_OPENVR_DIR}/bin/win64/*.dll")
+    list(APPEND OpenCASCADE_3RDPARTY_DLLS ${OPENVR_DLLS_IN_BIN})
+
+    message(STATUS "Found DLLs:")
+    foreach(dll ${OpenCASCADE_3RDPARTY_DLLS})
+        message(STATUS "  ${dll}")
+    endforeach()
+endif()
 
 # OpenCASCADE (Manual Configuration)
 if(OpenCASCADE_INCLUDE_DIR)
@@ -144,7 +198,7 @@ if(NOT OCCT_LIBRARIES_TO_LINK)
     message(FATAL_ERROR "Failed to build the list of OpenCASCADE libraries. Check your configuration.")
 endif()
 
-if(NOT OpenCASCADE_3RDPARTY_DLLS)
+if(WIN32 AND NOT OpenCASCADE_3RDPARTY_DLLS)
     message(FATAL_ERROR "Failed to find the list of OpenCASCADE 3rdParty. Check your configuration.")
 endif()
 
@@ -165,10 +219,19 @@ endif()
 #########
 # Core Library
 #########
+set(COREAPI_CPP_SOURCES)
+file(
+    GLOB COREAPI_CPP_SOURCES 
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/core_api/*.cpp"
+)
+set(COREAPI_H_HEADERS)
+file(
+    GLOB COREAPI_H_HEADERS 
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/core_api/*.h"
+)
 add_library(CoreApi SHARED
-    src/core_api/CadProcessor.cpp
-    src/core_api/CadProcessor.h
-    src/core_api/CADCore_global.h
+    ${COREAPI_CPP_SOURCES} 
+    ${COREAPI_H_HEADERS}
 )
 
 target_include_directories(CoreApi PUBLIC 
