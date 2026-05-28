@@ -19,12 +19,12 @@ class XCAFDoc_MaterialTool;
 namespace CADCore {
 
 struct CheckResult {
-  bool isValid = false;
-  int totalSolids = 0;
-  int totalFaces = 0;
-  int totalEdges = 0;
-  std::vector<std::string> issues;
-  std::vector<std::string> warnings;
+  bool m_isValid = false;
+  int m_totalSolids = 0;
+  int m_totalFaces = 0;
+  int m_totalEdges = 0;
+  std::vector<std::string> m_issues;
+  std::vector<std::string> m_warnings;
 };
 
 class CADCORE_EXPORT CadProcessor {

@@ -2,6 +2,28 @@ cmake_minimum_required(VERSION 3.19)
 project(Occt_Qt_Sample VERSION 0.0.1 LANGUAGES CXX)
 
 ####################################
+# clang-tidy
+####################################
+find_program(CLANG_TIDY clang-tidy)
+
+if(CLANG_TIDY)
+    message(STATUS "clang-tidy found: ${CLANG_TIDY}")
+    add_custom_target(clang_tidy
+        COMMAND ${CMAKE_COMMAND} -E echo ""
+        COMMAND ${CMAKE_COMMAND} -E echo "========== CLANG-TIDY START =========="
+        COMMAND ${CLANG_TIDY}
+            ${CMAKE_SOURCE_DIR}/src/core_api/CadProcessor.cpp
+            -p ${CMAKE_BINARY_DIR}
+            "--header-filter=^${CMAKE_SOURCE_DIR}/src/.*"
+        COMMAND ${CMAKE_COMMAND} -E echo ""
+        COMMAND ${CMAKE_COMMAND} -E echo "========== CLANG-TIDY END =========="
+    )
+else()
+    message(WARNING "clang-tidy not found")
+
+endif()
+
+####################################
 # cppcheck
 ####################################
 find_program(CPPCHECK cppcheck)
@@ -9,6 +31,7 @@ find_program(CPPCHECK cppcheck)
 if(CPPCHECK)
     message(STATUS "cppcheck found: ${CPPCHECK}")
     add_custom_target(cppcheck
+        COMMAND ${CMAKE_COMMAND} -E echo ""
         COMMAND ${CMAKE_COMMAND} -E echo "========== CPPCHECK START =========="
         COMMAND ${CPPCHECK}
             --enable=warning,performance,portability
@@ -31,6 +54,7 @@ if(CPPCHECK)
             -i ${CMAKE_BINARY_DIR}
 
             ${CMAKE_SOURCE_DIR}/src
+        COMMAND ${CMAKE_COMMAND} -E echo ""
         COMMAND ${CMAKE_COMMAND} -E echo "========== CPPCHECK END =========="
     )
 else()

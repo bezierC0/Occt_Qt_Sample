@@ -1,0 +1,48 @@
+{
+    "version": "2.0.0",
+
+    "tasks": [
+        {
+            "label": "clang-tidy",
+
+            "type": "process",
+
+            "command": "cmake",
+
+            "args": [
+                "--build",
+                "build",
+                "--target",
+                "clang_tidy"
+            ],
+
+            "problemMatcher": []
+        },
+
+        {
+            "label": "build",
+
+            "type": "process",
+
+            "command": "cmake",
+
+            "args": [
+                "--build",
+                "build"
+            ],
+
+            "problemMatcher": []
+        },
+
+        {
+            "label": "tidy + build",
+
+            "dependsOrder": "sequence",
+
+            "dependsOn": [
+                "clang-tidy",
+                "build"
+            ]
+        }
+    ]
+}
