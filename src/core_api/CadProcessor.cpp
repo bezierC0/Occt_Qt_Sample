@@ -41,6 +41,7 @@ namespace CADCore {
 
 struct CadProcessor::Implementation {
   TopoDS_Shape m_currentShape;
+  int clangtest;
   Handle(TDocStd_Document) m_doc;
 
   // XCAF Tools

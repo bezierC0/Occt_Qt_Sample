@@ -14,7 +14,11 @@
 #include <V3d_Viewer.hxx>
 #include <Aspect_DisplayConnection.hxx>
 #include <OpenGl_GraphicDriver.hxx>
+#ifdef _WIN32
 #include <WNT_Window.hxx>
+#else
+#include <Xw_Window.hxx>
+#endif
 
 
 // Map Qt buttons bitmask to virtual keys.
@@ -267,11 +271,16 @@ void Occt3DView::initializeGL()
         return;
     }
 
-    // Determine the window handle
+#ifdef _WIN32
+    // Windows: WNT_Window を使用
     Aspect_Handle aWindowHandle = (Aspect_Handle)winId();
-
-    // Create the OCCT window wrapper
     Handle(WNT_Window) aWindow = new WNT_Window(aWindowHandle);
+#else
+    // Linux (X11): Xw_Window を使用
+    Handle(Aspect_DisplayConnection) aDisp = m_viewer->Driver()->GetDisplayConnection();
+    Handle(Xw_Window) aWindow = new Xw_Window(aDisp, (Window)winId());
+#endif
+
     m_view->SetWindow(aWindow);
 
     if (!aWindow->IsMapped())
