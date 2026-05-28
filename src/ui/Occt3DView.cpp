@@ -17,6 +17,7 @@
 #ifdef _WIN32
 #include <WNT_Window.hxx>
 #else
+#include <X11/Xlib.h>
 #include <Xw_Window.hxx>
 #endif
 
