@@ -1,0 +1,37 @@
+name: Cppcheck Static Analysis
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, develop, 'feature/**' ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  cppcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install cppcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck
+
+      - name: Run cppcheck
+        run: |
+          cppcheck \
+            --enable=warning,performance,portability \
+            --std=c++17 \
+            --inline-suppr \
+            --suppress=missingIncludeSystem \
+            -DQ_OBJECT= \
+            -Dslots= \
+            "-Dsignals=public" \
+            -Demit= \
+            "-DHandle(x)=void*" \
+            -i ${{ github.workspace }}/external \
+            --error-exitcode=1 \
+            ${{ github.workspace }}/src

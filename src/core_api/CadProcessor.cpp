@@ -49,7 +49,12 @@ struct CadProcessor::Implementation {
   Handle(XCAFDoc_LayerTool) m_layerTool;
   Handle(XCAFDoc_MaterialTool) m_materialTool;
 
-  Implementation() {
+  Implementation()
+      : m_doc(nullptr),
+        m_colorTool(nullptr),
+        m_shapeTool(nullptr),
+        m_layerTool(nullptr),
+        m_materialTool(nullptr) {
     // Initialize XCAF application
     if (XCAFApp_Application::GetApplication().IsNull()) {
       // Just ensuring it's initialized
